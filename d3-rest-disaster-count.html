@@ -1,0 +1,81 @@
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+<script>
+var dataset=[];
+
+function drawGraph(data)
+{
+var width = 820,
+    barHeight = 20;
+
+var x = d3.scale.linear()
+    .domain([0, d3.max(data)])
+    .range([0, width]);
+
+var chart = d3.select(".chart")
+    .attr("width", width)
+    .attr("height", barHeight * data.length);
+
+var bar = chart.selectAll("g")
+    .data(data)
+    .enter().append("g")
+    .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
+
+bar.append("rect")
+    .attr("width", x)
+    .attr("height", barHeight - 1);
+
+bar.append("text")
+    .attr("x", function(d) { return x(d) - 3; })
+    .attr("y", barHeight / 2)
+    .attr("dy", ".35em")
+    .attr("fill","white")
+    .attr("text-anchor","end")
+    .text(function(d) { return d; });
+
+}
+
+function getData(data_url)
+{
+     jQuery.get(data_url, function (response) {
+         StoreData(response);
+     });
+}
+
+function StoreData(response) {
+   generateTotals(response);
+}
+
+function getTotal(disaster_id,disaster_name,length_of_array) {
+    var search_string = "http://digitalhistory.acs.unr.edu/nlp-disasters/rest/sources.json?disaster_id=" + disaster_id;
+   
+    jQuery.get(search_string, function (response) {
+          displayData(disaster_name,response.metadata.total_results,length_of_array); 
+    });
+}
+
+function displayData(disaster,total,length_of_array) {
+    jQuery("#results").append("<p>"+(disaster+ ': ' +total)+"</p>");
+    dataset.push(parseInt(total));
+if (dataset.length == length_of_array) drawGraph(dataset);
+ }
+
+function generateTotals(data) {
+    jQuery.each(data.results,function(i,item) {
+	getTotal(data.results[i].disaster_id,data.results[i].disaster,data.results.length);
+    });
+}
+
+
+getData("http://digitalhistory.acs.unr.edu/nlp-disasters/?q=rest/disasters-rest-api.json");
+
+
+</script>
+
+<div id="results"></div>
+
+<svg class="chart"></svg>
+
+
+
+
